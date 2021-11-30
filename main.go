@@ -13,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"sync"
+	"strings"
 	//"reflect"
 )
 
@@ -28,8 +29,8 @@ type AccountAssociation struct {
 }
 
 func listAccounts(c *gin.Context) {
-	var accountList []Account
 	host := c.Request.Host
+	var accountList []Account
 
     cfg, err := config.LoadDefaultConfig(context.TODO(),
    		config.WithRegion("us-east-1"),
@@ -98,7 +99,7 @@ func principalNameFromId(PrincipalId string) string {
 	return *identity.DisplayName 
 }
 
-func computePermissionSet(permissionset string, result *[]AccountAssociation, id string) {
+func computePermissionSet(permissionset string, result map[string]string, id string, host string) {
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
 	config.WithRegion("us-east-1"),
 	)
@@ -129,22 +130,31 @@ func computePermissionSet(permissionset string, result *[]AccountAssociation, id
 			log.Fatalf("failed to list accounts, %v", err)
 		}
 		for _, assigment :=  range assignments.AccountAssignments {
-			principalName := principalNameFromId(*assigment.PrincipalId)
-			permissionSetName := permissionSetNameFromArn(*assigment.PermissionSetArn)
-			*result = append(*result, AccountAssociation{*assigment.AccountId, permissionSetName, principalName})
+			principalName := "<a href=\"http://" + host + "/group/?group=" + 
+			*assigment.PrincipalId + "\">" + principalNameFromId(*assigment.PrincipalId) + "</a>"
+			permarn := permissionSetNameFromArn(*assigment.PermissionSetArn)
+			permarn = strings.Replace(permarn, ":", "%3A", -1)
+			permarn = strings.Replace(permarn, "/", "%2F", -1)
+			permissionSetName := "<a href=\"http://" + host + "/ps/?arn=" +
+			*assigment.PermissionSetArn + "\">" + permarn + "</a>"
+			if _, ok := result[principalName]; ok {
+				result[principalName] = result[principalName] + ", " + permissionSetName
+			} else {
+				result[principalName] = permissionSetName
+			}
 		}
 		nextToken = assignments.NextToken
 	}
 }
 
-func computePermissionSetsList(permissionList []string, result *[]AccountAssociation, id string) {
+func computePermissionSetsList(permissionList []string, result map[string]string, id string, host string) {
 	//Takes a list of Permission set, converts the Id/Arns into Names and add it to the permissionList
 	var wg sync.WaitGroup
 	for _,perm := range permissionList {
 		wg.Add(1)
 		go func(permi string) {
             defer wg.Done()
-			computePermissionSet(permi, result, id)
+			computePermissionSet(permi, result, id, host)
         }(perm)
 	}
 	wg.Wait()
@@ -152,7 +162,10 @@ func computePermissionSetsList(permissionList []string, result *[]AccountAssocia
 
 func getPermissionsByAccountID(c *gin.Context) {
 	id := c.Param("id")
-	result := new([]AccountAssociation)
+	host := c.Request.Host
+	//result := new([]AccountAssociation)
+	resultmap := make(map[string]string)
+
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
    		config.WithRegion("us-east-1"),
    	)
@@ -180,18 +193,75 @@ func getPermissionsByAccountID(c *gin.Context) {
 				NextToken : nextToken,
 			})
 		}
-		//fmt.Println(permlist.PermissionSets)
 		if err != nil {
 			log.Fatalf("failed to list accounts, %v", err)
 		}
-		computePermissionSetsList(permlist.PermissionSets, result, id)
+		computePermissionSetsList(permlist.PermissionSets, resultmap, id, host)
 		nextToken = permlist.NextToken
 	}
-	//sortedresult := new ([]AccountAssociation)
-	for _,association := range *result {
-		fmt.Println(association.GroupName)
+	fmt.Println(resultmap)
+	c.JSON(http.StatusOK, resultmap)
+}
+
+func getPSPoliciesByARN(c *gin.Context) {
+	arn := c.Request.URL.Query()["arn"][0]
+	resultmap := make(map[string]string)
+	cfg, err := config.LoadDefaultConfig(context.TODO(),
+   		config.WithRegion("us-east-1"),
+   	)
+	if err != nil {
+        log.Fatalf("unable to load SDK config, %v", err)
+    }
+	ssoadm := ssoadmin.NewFromConfig(cfg)
+	// TODO : Find a way to remove hardcoded arn
+	instanceArn := "arn:aws:sso:::instance/ssoins-72231249bc307843"
+	nextToken := new(string)
+	for nextToken != nil {
+		policieslist := new(ssoadmin.ListManagedPoliciesInPermissionSetOutput)
+		if *nextToken == "" {
+			policieslist, err = ssoadm.ListManagedPoliciesInPermissionSet(context.TODO(), &ssoadmin.ListManagedPoliciesInPermissionSetInput {
+				InstanceArn : &instanceArn,
+				PermissionSetArn : &arn,
+				MaxResults : aws.Int32(10),
+			})
+		} else {
+			policieslist, err = ssoadm.ListManagedPoliciesInPermissionSet(context.TODO(), &ssoadmin.ListManagedPoliciesInPermissionSetInput {
+				InstanceArn : &instanceArn,
+				PermissionSetArn : &arn,
+				MaxResults : aws.Int32(10),
+				NextToken : nextToken,
+			})
+		}
+		if err != nil {
+			log.Fatalf("failed to list policies, %v", err)
+		}
+		//computePermissionSetsList(permlist.PermissionSets, resultmap, id, host)
+		for _,policy := range policieslist.AttachedManagedPolicies {
+			resultmap[*policy.Name] = *policy.Arn
+			fmt.Println(*policy.Name)
+		}
+		//fmt.Println(policieslist.AttachedManagedPolicies["Name"])
+		nextToken = policieslist.NextToken
 	}
-	c.JSON(http.StatusOK, result)
+	c.JSON(http.StatusOK, resultmap)
+}
+
+func getPSInlineByARN(c *gin.Context) {
+	arn := c.Request.URL.Query()["arn"][0]
+	cfg, err := config.LoadDefaultConfig(context.TODO(),
+		config.WithRegion("us-east-1"),
+	)
+	if err != nil {
+ 		log.Fatalf("unable to load SDK config, %v", err)
+	}
+	ssoadm := ssoadmin.NewFromConfig(cfg)
+	// TODO : Find a way to remove hardcoded arn
+	instanceArn := "arn:aws:sso:::instance/ssoins-72231249bc307843"
+	inlinePolicy, err := ssoadm.GetInlinePolicyForPermissionSet(context.TODO(), &ssoadmin.GetInlinePolicyForPermissionSetInput {
+		InstanceArn : &instanceArn,
+		PermissionSetArn : &arn,
+	})
+	c.String(http.StatusOK, *inlinePolicy.InlinePolicy)
 }
 
 func main() {
@@ -204,8 +274,13 @@ func main() {
 	router.StaticFile("/favicon.ico", "./staticfiles/favicon.ico")
 	router.StaticFile("/images/searchicon.png", "./staticfiles/searchicon.png")
 	router.StaticFile("/account","staticfiles/account.html")
+	router.StaticFile("/ps","staticfiles/ps.html")
+	router.StaticFile("/group","staticfiles/group.html")
 
+	//router.GET("/getusers/:group", getUsersByGroupID) 
 	router.GET("/getaccount/:id", getPermissionsByAccountID)
+	router.GET("/getpspolicies", getPSPoliciesByARN)
+	router.GET("/getpsinline", getPSInlineByARN)
 	router.GET("/accountslist", listAccounts)
 	
 	router.GET("/", func(c *gin.Context) {

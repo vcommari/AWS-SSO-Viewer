@@ -139,27 +139,65 @@ function getParameterByName(name, url = window.location.href) {
 
 function get_json_account() {
     var account = getParameterByName('account');
-    console.log(account)
-    var json_url = 'http://localhost:8080/getaccount/727599487250';
-    console.log(json_url)
-    var xhr2 = new XMLHttpRequest();
-    xhr2.open('GET', json_url, true);
+    var json_url = 'http://localhost:8080/getaccount/' + account;
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', json_url, true);
 
-    xhr2.onload = function () {
-        accounts = JSON.parse(xhr2.response)
+    xhr.onload = function () {
+        accounts = JSON.parse(xhr.response)
         append_account_json(accounts)
-        //console.log(accounts[1])
     };
-    xhr2.send(null);
+    xhr.send(null);
 }
 //this function appends the json data to the table 'myTable'
 function append_account_json(data) {
     var table = document.getElementById('myTable');
-    data.forEach(function (object) {
+    for (let k in data) {
         var tr = document.createElement('tr');
         tr.innerHTML =
-            '<td>' + object.GroupName + '</td>' +
-            '<td>' + object.PermissionSetName + '</td>';
+            '<td>' + k + '</td>' +
+            '<td>' + data[k] + '</td>';
         table.appendChild(tr);
-    });
+    };
+}
+
+function get_json_ps() {
+    var arn = getParameterByName('arn');
+    var json_url = 'http://localhost:8080/getpspolicies?arn=' + arn;
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', json_url, true);
+
+    xhr.onload = function () {
+        policy = JSON.parse(xhr.response)
+        append_ps_json(policy)
+    };
+    xhr.send(null);
+
+    // Inline policy
+    json_url2 = 'http://localhost:8080/getpsinline?arn=' + arn;
+    var xhr2 = new XMLHttpRequest();
+    xhr2.open('GET', json_url2, true);
+
+    xhr2.onload = function () {
+        var result = xhr2.response;
+        prettyResult = JSON.stringify(JSON.parse(result), null, 2);
+        var inlinetable = document.getElementById('inlinetable');
+        var inlinetr = document.createElement('tr');
+        inlinetr.innerHTML = "<pre>" + prettyResult + "</pre>";
+        inlinetable.appendChild(inlinetr);
+        var test = document.getElementById('test');
+    };
+    
+    xhr2.send(null);
+}
+//this function appends the json data to the table 'myTable'
+function append_ps_json(data) {
+    var table = document.getElementById('myTable');
+    for (let k in data) {
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+            '<td>' + k + '</td>' +
+            '<td>' + data[k] + '</td>';
+        table.appendChild(tr);
+    };
 }

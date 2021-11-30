@@ -132,3 +132,25 @@ h1.slideRight {
     background-color: #f1f1f1;
   } 
 
+
+#inlinetable {
+    border-collapse: collapse; /* Collapse borders */
+    width: 600px; /* Full-width */
+    border: 1px solid #ddd; /* Add a grey border */
+    font-size: 14px; /* Increase font-size */
+  }
+
+  #inlinetable th, #inlinetable td {
+    text-align: left; /* Left-align text */
+    padding: 12px; /* Add padding */
+  }
+  
+  #inlinetable tr {
+    /* Add a bottom border to all table rows */
+    border-bottom: 1px solid #ddd;
+  }
+  
+  #inlinetable tr.header, #inlinetable tr:hover {
+    /* Add a grey background color to the table header and on hover */
+    background-color: #f1f1f1;
+  } 
