@@ -130,8 +130,7 @@ func computePermissionSet(permissionset string, result map[string]string, id str
 			log.Fatalf("failed to list accounts, %v", err)
 		}
 		for _, assigment :=  range assignments.AccountAssignments {
-			principalName := "<a href=\"http://" + host + "/group/?group=" + 
-			*assigment.PrincipalId + "\">" + principalNameFromId(*assigment.PrincipalId) + "</a>"
+			principalName := principalNameFromId(*assigment.PrincipalId)
 			permarn := permissionSetNameFromArn(*assigment.PermissionSetArn)
 			permarn = strings.Replace(permarn, ":", "%3A", -1)
 			permarn = strings.Replace(permarn, "/", "%2F", -1)
