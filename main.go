@@ -58,7 +58,7 @@ func listAccounts(c *gin.Context) {
 			log.Fatalf("failed to list accounts, %v", err)
 		}
 		for _, account := range list.Accounts {
-			url := "<a href=\"http://" + host + "/account/?account=" + *account.Id + "\">" + *account.Name + "</a>"
+			url := "<a href=\"http://" + host + "/?page=accounts&?account=" + *account.Id + "\">" + *account.Name + "</a>"
 			a := Account{url,*account.Id}
 			accountList = append(accountList, a)
 		}
@@ -134,7 +134,7 @@ func computePermissionSet(permissionset string, result map[string]string, id str
 			permarn := permissionSetNameFromArn(*assigment.PermissionSetArn)
 			permarn = strings.Replace(permarn, ":", "%3A", -1)
 			permarn = strings.Replace(permarn, "/", "%2F", -1)
-			permissionSetName := "<a href=\"http://" + host + "/ps/?arn=" +
+			permissionSetName := "<a href=\"http://" + host + "/?page=ps&arn=" +
 			*assigment.PermissionSetArn + "\">" + permarn + "</a>"
 			if _, ok := result[principalName]; ok {
 				result[principalName] = result[principalName] + ", " + permissionSetName
@@ -272,9 +272,6 @@ func main() {
 	router.StaticFile("/styles.css", "./staticfiles/styles.css")
 	router.StaticFile("/favicon.ico", "./staticfiles/favicon.ico")
 	router.StaticFile("/images/searchicon.png", "./staticfiles/searchicon.png")
-	router.StaticFile("/account","staticfiles/account.html")
-	router.StaticFile("/ps","staticfiles/ps.html")
-	router.StaticFile("/group","staticfiles/group.html")
 
 	//router.GET("/getusers/:group", getUsersByGroupID) 
 	router.GET("/getaccount/:id", getPermissionsByAccountID)

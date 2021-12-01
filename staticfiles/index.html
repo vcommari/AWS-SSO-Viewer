@@ -11,17 +11,15 @@
   <script src="table.js" type="text/javascript"></script>
   <script>
     //first add an event listener for page load
-    document.addEventListener("DOMContentLoaded", get_json_data, false); // get_json_data is the function name that will fire on page load
+    document.addEventListener("DOMContentLoaded", populate_table, false); // get_json_data is the function name that will fire on page load
   </script>
 </head>
 
 <body>
     <input type="text" id="myInput" onkeyup="search()" placeholder="Search for account..">
     <table id="myTable" class=right>
-      <tr>
-        <th onclick="sortTable(0)">Account Name</th>
-        <th onclick="sortTable(1)">Account Id</th>
-      </tr>
+    </table>
+    <table id="inlinetable">
     </table>
     <p>
     </p>

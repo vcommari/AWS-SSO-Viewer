@@ -101,15 +101,96 @@ function search() {
 }
 
 //this function is in the event listener and will execute on page load
-function get_json_data() {
-    var json_url = 'http://localhost:8080/accountslist';
+function populate_table() {
+    // Populate colunm titles
+    var table = document.getElementById('myTable');
+    var tr = document.createElement('tr');
+    var page = getParameterByName('page');
+    console.log(page);
+    switch(page) {
+        case "ps":
+            tr.innerHTML =
+                '<th onclick="sortTable(0)">Name</th>' +
+                '<th onclick="sortTable(1)">Arn</th>';
+            var inlinetable = document.getElementById('inlinetable');
+            var inlinetr = document.createElement('tr');
+            inlinetr.innerHTML = '<th>Inline Policy</th>';
+            inlinetable.appendChild(inlinetr);
+            break;
+        case "accounts":
+            tr.innerHTML =
+                '<th onclick="sortTable(0)">Group</th>' +
+                '<th onclick="sortTable(1)">PermissionSet</th>';
+            break;
+        default:
+            tr.innerHTML =
+                '<th onclick="sortTable(0)">Account name</th>' +
+                '<th onclick="sortTable(1)">Account Id</th>';
+                break;            
+    }
+    table.appendChild(tr);
+    console.log(window.location.host)
+
+    // Fetch and display data
+    switch(page) {
+        case "ps":
+            var arn = getParameterByName('arn');
+            var json_url = 'http://' + window.location.host + '/getpspolicies?arn=' + arn;
+            break;
+        case "accounts":
+            var account = getParameterByName('account');
+            var json_url = 'http://' + window.location.host + '/getaccount/' + account;
+            break;
+        default:
+            var json_url = 'http://' + window.location.host + '/accountslist';
+    }
     var xhr = new XMLHttpRequest();
     xhr.open('GET', json_url, true);
 
     xhr.onload = function () {
-        accounts = JSON.parse(xhr.response)
-        append_json(accounts)
-        //console.log(accounts[1])
+        data = JSON.parse(xhr.response)
+        switch(page) {
+            case "ps":
+                for (let k in data) {
+                    var tr = document.createElement('tr');
+                    tr.innerHTML =
+                        '<td>' + k + '</td>' +
+                        '<td>' + data[k] + '</td>';
+                    table.appendChild(tr);
+                };
+                // Inline policy
+                json_url2 = 'http://' + window.location.host + '/getpsinline?arn=' + arn;
+                var xhr2 = new XMLHttpRequest();
+                xhr2.open('GET', json_url2, true);
+                xhr2.onload = function () {
+                    var result = xhr2.response;
+                    prettyResult = JSON.stringify(JSON.parse(result), null, 2);
+                    var inlinetable = document.getElementById('inlinetable');
+                    var inlinetr = document.createElement('tr');
+                    inlinetr.innerHTML = "<pre>" + prettyResult + "</pre>";
+                    inlinetable.appendChild(inlinetr); 
+                }
+                xhr2.send(null);
+                break;
+            case "accounts":
+                for (let k in data) {
+                    var tr = document.createElement('tr');
+                    tr.innerHTML =
+                        '<td>' + k + '</td>' +
+                        '<td>' + data[k] + '</td>';
+                    table.appendChild(tr);
+                }
+                break;
+            default:
+                data.forEach(function (object) {
+                    var tr = document.createElement('tr');
+                    tr.innerHTML =
+                        '<td>' + object.Name + '</td>' +
+                        '<td>' + object.Id + '</td>';
+                    table.appendChild(tr);
+                });
+        }
+        //append_json(accounts)
     };
     xhr.send(null);
 }
@@ -138,6 +219,7 @@ function getParameterByName(name, url = window.location.href) {
 }
 
 function get_json_account() {
+    console.log(window.location.pathname)
     var account = getParameterByName('account');
     var json_url = 'http://localhost:8080/getaccount/' + account;
     var xhr = new XMLHttpRequest();
