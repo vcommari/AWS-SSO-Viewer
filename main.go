@@ -87,20 +87,31 @@ func permissionSetNameFromArn(PermissionSetArn string) string {
 	return *perm.PermissionSet.Name
 }
 
-func principalNameFromId(PrincipalId string) string {
+func principalNameFromId(PrincipalId string, PrincipalType string) string {
 	identityStoreId := viper.GetString("identityStoreId")
-	cfg, err := config.LoadDefaultConfig(context.TODO(),
+	cfg, _ := config.LoadDefaultConfig(context.TODO(),
 	config.WithRegion("us-east-1"),
 	)
 	myidentitystore := identitystore.NewFromConfig(cfg)
-	identity, err := myidentitystore.DescribeGroup(context.TODO(), &identitystore.DescribeGroupInput {
-		GroupId : &PrincipalId,
-		IdentityStoreId : &identityStoreId,
-	})
-	if err != nil {
-		log.Fatalf("failed to describe group, %v", err)
+	if PrincipalType == "GROUP" {
+		identity, err := myidentitystore.DescribeGroup(context.TODO(), &identitystore.DescribeGroupInput {
+			GroupId : &PrincipalId,
+			IdentityStoreId : &identityStoreId,
+		})
+		if err != nil {
+			log.Fatalf("failed to describe group, %v", err)
+		}
+		return *identity.DisplayName 
+	} else {
+		identity, err := myidentitystore.DescribeUser(context.TODO(), &identitystore.DescribeUserInput {
+			UserId : &PrincipalId,
+			IdentityStoreId : &identityStoreId,
+		})
+		if err != nil {
+			log.Fatalf("failed to describe user	#, %v", err)
+		}
+		return *identity.UserName 
 	}
-	return *identity.DisplayName 
 }
 
 func computePermissionSet(permissionset string, result map[string]string, id string, host string) {
@@ -108,9 +119,7 @@ func computePermissionSet(permissionset string, result map[string]string, id str
 	config.WithRegion("us-east-1"),
 	)
 	ssoadm := ssoadmin.NewFromConfig(cfg)
-	// TODO : Find a way to remove hardcoded arn
 	instanceArn := viper.GetString("instanceArn")
-	//fmt.Println(permissionset)
 	nextToken := new(string)
 	for nextToken != nil {
 		assignments:= new(ssoadmin.ListAccountAssignmentsOutput)
@@ -134,7 +143,12 @@ func computePermissionSet(permissionset string, result map[string]string, id str
 			log.Fatalf("failed to list accounts, %v", err)
 		}
 		for _, assigment :=  range assignments.AccountAssignments {
-			principalName := principalNameFromId(*assigment.PrincipalId)
+			var principalName string
+			if assigment.PrincipalType == "GROUP" {
+				principalName = principalNameFromId(*assigment.PrincipalId, "GROUP")
+			} else {
+				principalName = principalNameFromId(*assigment.PrincipalId, "USER")
+			}
 			permarn := permissionSetNameFromArn(*assigment.PermissionSetArn)
 			permarn = strings.Replace(permarn, ":", "%3A", -1)
 			permarn = strings.Replace(permarn, "/", "%2F", -1)
