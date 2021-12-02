@@ -13,8 +13,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"sync"
-	"strings"
-	//c "./config"
 	"github.com/spf13/viper"
 	//"reflect"
 )
@@ -24,14 +22,23 @@ type Account struct {
     Id string
 }
 
+type Group struct {
+	Name string
+	Id string
+}
+
+type PermissionSet struct {
+	Name string
+	Arn string
+}
+
 type AccountAssociation struct {
 	AccountId string
-	PermissionSetName string
-	GroupName string
+	Group Group
+	PermissionSet PermissionSet
 }
 
 func listAccounts(c *gin.Context) {
-	host := c.Request.Host
 	var accountList []Account
 
     cfg, err := config.LoadDefaultConfig(context.TODO(),
@@ -61,8 +68,8 @@ func listAccounts(c *gin.Context) {
 		}
 		for _, account := range list.Accounts {
 			if account.Status == "ACTIVE" {
-				url := "<a href=\"http://" + host + "/?page=accounts&?account=" + *account.Id + "\">" + *account.Name + "</a>"
-				a := Account{url,*account.Id}
+
+				a := Account{*account.Name,*account.Id}
 				accountList = append(accountList, a)
 			}
 		}
@@ -114,7 +121,7 @@ func principalNameFromId(PrincipalId string, PrincipalType string) string {
 	}
 }
 
-func computePermissionSet(permissionset string, result map[string]string, id string, host string) {
+func computePermissionSet(permissionset string, result *[]AccountAssociation, id string, host string) {
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
 	config.WithRegion("us-east-1"),
 	)
@@ -149,7 +156,12 @@ func computePermissionSet(permissionset string, result map[string]string, id str
 			} else {
 				principalName = principalNameFromId(*assigment.PrincipalId, "USER")
 			}
-			permarn := permissionSetNameFromArn(*assigment.PermissionSetArn)
+			//permarn := permissionSetNameFromArn(*assigment.PermissionSetArn)
+			group := Group{principalName, *assigment.PrincipalId}
+			permissionset := PermissionSet{permissionSetNameFromArn(*assigment.PermissionSetArn), *assigment.PermissionSetArn}
+			a := AccountAssociation{id, group, permissionset}
+			*result = append(*result, a)
+			/*
 			permarn = strings.Replace(permarn, ":", "%3A", -1)
 			permarn = strings.Replace(permarn, "/", "%2F", -1)
 			permissionSetName := "<a href=\"http://" + host + "/?page=ps&arn=" +
@@ -159,12 +171,13 @@ func computePermissionSet(permissionset string, result map[string]string, id str
 			} else {
 				result[principalName] = permissionSetName
 			}
+			*/
 		}
 		nextToken = assignments.NextToken
 	}
 }
 
-func computePermissionSetsList(permissionList []string, result map[string]string, id string, host string) {
+func computePermissionSetsList(permissionList []string, result *[]AccountAssociation, id string, host string) {
 	//Takes a list of Permission set, converts the Id/Arns into Names and add it to the permissionList
 	var wg sync.WaitGroup
 	for _,perm := range permissionList {
@@ -180,8 +193,8 @@ func computePermissionSetsList(permissionList []string, result map[string]string
 func getPermissionsByAccountID(c *gin.Context) {
 	id := c.Param("id")
 	host := c.Request.Host
-	//result := new([]AccountAssociation)
-	resultmap := make(map[string]string)
+	result := new([]AccountAssociation)
+	//resultmap := make(map[string]string)
 
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
    		config.WithRegion("us-east-1"),
@@ -213,11 +226,11 @@ func getPermissionsByAccountID(c *gin.Context) {
 		if err != nil {
 			log.Fatalf("failed to list accounts, %v", err)
 		}
-		computePermissionSetsList(permlist.PermissionSets, resultmap, id, host)
+		computePermissionSetsList(permlist.PermissionSets, result, id, host)
 		nextToken = permlist.NextToken
 	}
-	fmt.Println(resultmap)
-	c.JSON(http.StatusOK, resultmap)
+	fmt.Println(result)
+	c.JSON(http.StatusOK, result)
 }
 
 func getPSPoliciesByARN(c *gin.Context) {
