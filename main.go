@@ -14,6 +14,8 @@ import (
 	"net/http"
 	"sync"
 	"strings"
+	//c "./config"
+	"github.com/spf13/viper"
 	//"reflect"
 )
 
@@ -68,7 +70,7 @@ func listAccounts(c *gin.Context) {
 }
 
 func permissionSetNameFromArn(PermissionSetArn string) string {
-	instanceArn := "arn:aws:sso:::instance/ssoins-72231249bc307843"
+	instanceArn := viper.GetString("instanceArn")
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
 	config.WithRegion("us-east-1"),
 	)
@@ -84,7 +86,7 @@ func permissionSetNameFromArn(PermissionSetArn string) string {
 }
 
 func principalNameFromId(PrincipalId string) string {
-	identityStoreId := "d-9067081d78"
+	identityStoreId := viper.GetString("identityStoreId")
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
 	config.WithRegion("us-east-1"),
 	)
@@ -105,7 +107,7 @@ func computePermissionSet(permissionset string, result map[string]string, id str
 	)
 	ssoadm := ssoadmin.NewFromConfig(cfg)
 	// TODO : Find a way to remove hardcoded arn
-	instanceArn := "arn:aws:sso:::instance/ssoins-72231249bc307843"
+	instanceArn := viper.GetString("instanceArn")
 	//fmt.Println(permissionset)
 	nextToken := new(string)
 	for nextToken != nil {
@@ -173,7 +175,7 @@ func getPermissionsByAccountID(c *gin.Context) {
     }
 	ssoadm := ssoadmin.NewFromConfig(cfg)
 	// TODO : Find a way to remove hardcoded arn
-	instanceArn := "arn:aws:sso:::instance/ssoins-72231249bc307843"
+	instanceArn := viper.GetString("instanceArn")
 
 	nextToken := new(string)
 	for nextToken != nil {
@@ -213,7 +215,7 @@ func getPSPoliciesByARN(c *gin.Context) {
     }
 	ssoadm := ssoadmin.NewFromConfig(cfg)
 	// TODO : Find a way to remove hardcoded arn
-	instanceArn := "arn:aws:sso:::instance/ssoins-72231249bc307843"
+	instanceArn := viper.GetString("instanceArn")
 	nextToken := new(string)
 	for nextToken != nil {
 		policieslist := new(ssoadmin.ListManagedPoliciesInPermissionSetOutput)
@@ -255,7 +257,7 @@ func getPSInlineByARN(c *gin.Context) {
 	}
 	ssoadm := ssoadmin.NewFromConfig(cfg)
 	// TODO : Find a way to remove hardcoded arn
-	instanceArn := "arn:aws:sso:::instance/ssoins-72231249bc307843"
+	instanceArn := viper.GetString("instanceArn")
 	inlinePolicy, err := ssoadm.GetInlinePolicyForPermissionSet(context.TODO(), &ssoadmin.GetInlinePolicyForPermissionSetInput {
 		InstanceArn : &instanceArn,
 		PermissionSetArn : &arn,
@@ -264,6 +266,21 @@ func getPSInlineByARN(c *gin.Context) {
 }
 
 func main() {
+	// Set the file name of the configurations file
+	viper.SetConfigName("config")
+	// Set the path to look for the configurations file
+	viper.AddConfigPath(".")
+
+	// Enable VIPER to read Environment Variables
+	viper.AutomaticEnv()
+
+	viper.SetConfigType("yml")
+
+	err := viper.ReadInConfig() // Find and read the config file
+	if err != nil { // Handle errors reading the config file
+		panic(fmt.Errorf("Fatal error config file: %w \n", err))
+	}
+
 	router := gin.Default()
 	router.LoadHTMLFiles("staticfiles/index.html")
 	//router.LoadHTMLFiles("staticfiles/account.html")
@@ -285,7 +302,7 @@ func main() {
 		})
     })
 
-	router.Run("localhost:8080")
+	router.Run("localhost:" + viper.GetString("port"))
 }
 
 
