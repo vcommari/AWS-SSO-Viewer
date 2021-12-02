@@ -60,9 +60,11 @@ func listAccounts(c *gin.Context) {
 			log.Fatalf("failed to list accounts, %v", err)
 		}
 		for _, account := range list.Accounts {
-			url := "<a href=\"http://" + host + "/?page=accounts&?account=" + *account.Id + "\">" + *account.Name + "</a>"
-			a := Account{url,*account.Id}
-			accountList = append(accountList, a)
+			if account.Status == "ACTIVE" {
+				url := "<a href=\"http://" + host + "/?page=accounts&?account=" + *account.Id + "\">" + *account.Name + "</a>"
+				a := Account{url,*account.Id}
+				accountList = append(accountList, a)
+			}
 		}
 		nextToken = list.NextToken
 	}
