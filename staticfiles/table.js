@@ -102,6 +102,10 @@ function search() {
 
 //this function is in the event listener and will execute on page load
 function populate_table() {
+    // Create menu links
+    menu = document.getElementById('menu_account')
+    menu.innerHTML = '<a href="http://' + window.location.host + '">Accounts</a>'
+
     // Populate colunm titles
     var table = document.getElementById('myTable');
     var tr = document.createElement('tr');

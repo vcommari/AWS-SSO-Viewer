@@ -1,110 +1,48 @@
-h1 {
-    color: red;
-}
 
-.center {
-    margin-left: auto;
-    margin-right: auto;
-}
+.item1 { grid-area: header; }
+.item2 { grid-area: menu; }
+.item3 { grid-area: main; }
+.item4 { grid-area: main2; }
+.item5 { grid-area: search; }
 
-header img.logo {
-    height: 60px;
-}
+
+.grid-container {
+    display: grid;
+    grid-template-areas:
+      'header header header header header header'
+      'menu search search search search search'
+      'menu main main main main main'
+      'menu main2 main2 main2 main2 main2';
+    grid-gap: 10px;
+    background-color: white;
+    padding: 10px;
+  }
+
+.grid-container > div {
+    /*background-color: rgba(255, 255, 255, 0.8);*/
+    text-align: left;
+    padding: 20px 0;
+    
+  }
+.item2 {
+    /*background-color: lightgrey;*/
+    border: 1px solid #ddd;
+    width: 150px;
+    font-size: 14px; /* Increase font-size */
+  }
+
 
 body {
     color: #000;
     font: 13px Arial, sans-serif;
     -webkit-text-size-adjust: 100%;
 }
-
-section.section {
-	margin: 20px 0;
-	padding: 0 10px;
-}
-
-*, ::before, ::after {
-	box-sizing: border-box;
-}
-
-.introContainer {
-    height: 275px;
-    margin: 0 10px;
-    position: relative;
-}
-
-.mainTitle {
-    align-items: center;
-    bottom: 0;
-    display: flex;
-    position: absolute;
-    top: 0;
-    width: 100%;
-    z-index: 10;
-}
-.mainTitle h1 {
-    margin: 0 0 0 20px;
-    width: 100%;
-}
-h1 {
-    font-size: 2em;
-    margin: 0;
-}
-#introVideoContainer, #introVideoContainer.bg1 {
-    background: url("images/2020_hero.jpg") no-repeat 45% / cover;
-}
-
-#introVideoContainer {
-    height: 100%;
-    overflow: hidden;
-    position: absolute;
-    right: 0;
-    top: 0;
-    width: 100%;
-    z-index: 0;
-}
-
-/* ================================================== */
-/* Animations */
-/* ================================================== */
-.slideRight {
-    animation-name: slideRight;
-    animation-duration: 0.3s;
-    animation-timing-function: ease-out;
-    visibility: visible !important;
-}
-h1.slideRight {
-    animation-duration: 0.7s;
-}
-@keyframes slideRight {
-    0% {
-        opacity: 0;
-        transform: translateX(-100%);
-   }
-    100% {
-        opacity: 1;
-        transform: translateX(0%);
-   }
-}
-.showVideo {
-    animation-name: showVideo;
-    animation-duration: 1s;
-}
-@keyframes showVideo {
-    0% {
-        opacity: 0;
-   }
-    100% {
-        opacity: 1;
-   }
-}
-
-
 #myInput {
     background-image: url('images/searchicon.png'); /* Add a search icon to input */
     background-position: 10px 12px; /* Position the search icon */
     background-repeat: no-repeat; /* Do not repeat the icon image */
     width: 600px; /* Full-width */
-    font-size: 16px; /* Increase font-size */
+    font-size: 14px; /* Increase font-size */
     padding: 12px 20px 12px 40px; /* Add some padding */
     border: 1px solid #ddd; /* Add a grey border */
     margin-bottom: 12px; /* Add some space below the input */
@@ -154,3 +92,8 @@ h1.slideRight {
     /* Add a grey background color to the table header and on hover */
     background-color: #f1f1f1;
   } 
+
+
+
+
+

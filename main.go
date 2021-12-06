@@ -42,7 +42,7 @@ func listAccounts(c *gin.Context) {
 	var accountList []Account
 
     cfg, err := config.LoadDefaultConfig(context.TODO(),
-   		config.WithRegion("us-east-1"),
+   		config.WithRegion("ca-central-1"),
    	)
     if err != nil {
         log.Fatalf("unable to load SDK config, %v", err)
@@ -81,7 +81,7 @@ func listAccounts(c *gin.Context) {
 func permissionSetNameFromArn(PermissionSetArn string) string {
 	instanceArn := viper.GetString("instanceArn")
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
-	config.WithRegion("us-east-1"),
+	config.WithRegion("ca-central-1"),
 	)
 	ssoadm := ssoadmin.NewFromConfig(cfg)
 	perm, err := ssoadm.DescribePermissionSet(context.TODO(), &ssoadmin.DescribePermissionSetInput   {
@@ -97,7 +97,7 @@ func permissionSetNameFromArn(PermissionSetArn string) string {
 func principalNameFromId(PrincipalId string, PrincipalType string) string {
 	identityStoreId := viper.GetString("identityStoreId")
 	cfg, _ := config.LoadDefaultConfig(context.TODO(),
-	config.WithRegion("us-east-1"),
+	config.WithRegion("ca-central-1"),
 	)
 	myidentitystore := identitystore.NewFromConfig(cfg)
 	if PrincipalType == "GROUP" {
@@ -123,7 +123,7 @@ func principalNameFromId(PrincipalId string, PrincipalType string) string {
 
 func computePermissionSet(permissionset string, result *[]AccountAssociation, id string, host string) {
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
-	config.WithRegion("us-east-1"),
+	config.WithRegion("ca-central-1"),
 	)
 	ssoadm := ssoadmin.NewFromConfig(cfg)
 	instanceArn := viper.GetString("instanceArn")
@@ -197,7 +197,7 @@ func getPermissionsByAccountID(c *gin.Context) {
 	//resultmap := make(map[string]string)
 
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
-   		config.WithRegion("us-east-1"),
+   		config.WithRegion("ca-central-1"),
    	)
 	if err != nil {
         log.Fatalf("unable to load SDK config, %v", err)
@@ -237,7 +237,7 @@ func getPSPoliciesByARN(c *gin.Context) {
 	arn := c.Request.URL.Query()["arn"][0]
 	resultmap := make(map[string]string)
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
-   		config.WithRegion("us-east-1"),
+   		config.WithRegion("ca-central-1"),
    	)
 	if err != nil {
         log.Fatalf("unable to load SDK config, %v", err)
@@ -279,7 +279,7 @@ func getPSPoliciesByARN(c *gin.Context) {
 func getPSInlineByARN(c *gin.Context) {
 	arn := c.Request.URL.Query()["arn"][0]
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithRegion("us-east-1"),
+		config.WithRegion("ca-central-1"),
 	)
 	if err != nil {
  		log.Fatalf("unable to load SDK config, %v", err)
@@ -317,6 +317,7 @@ func main() {
 	router.StaticFile("/table.js", "./staticfiles/table.js")
 	router.StaticFile("/styles.css", "./staticfiles/styles.css")
 	router.StaticFile("/favicon.ico", "./staticfiles/favicon.ico")
+	router.StaticFile("/SSO_logo.png", "./staticfiles/SSO_logo.png")
 	router.StaticFile("/images/searchicon.png", "./staticfiles/searchicon.png")
 
 	//router.GET("/getusers/:group", getUsersByGroupID) 
