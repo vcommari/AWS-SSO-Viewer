@@ -117,7 +117,7 @@ func listPSs(c *gin.Context) {
 		}
 		for _, ps := range list.PermissionSets {
 			wg.Add(1)
-			//fmt.Println(ps)
+			fmt.Println(ps) // Without this println the goroutine takes the same ps for some reason 
 			go func(PSList *[]PermissionSetDetails, arn string) {				
 				defer wg.Done()
 				computePermissionSetsDetail(PSList, ps)
