@@ -38,6 +38,11 @@ type AccountAssociation struct {
 	PermissionSet PermissionSet
 }
 
+type PermissionSetDetails struct {
+	Name string
+	Description string
+}
+
 func listAccounts(c *gin.Context) {
 	var accountList []Account
 
@@ -76,6 +81,76 @@ func listAccounts(c *gin.Context) {
 		nextToken = list.NextToken
 	}
 	c.JSON(http.StatusOK, accountList)
+}
+
+func listPSs(c *gin.Context) {
+	//var PSList []string
+	PSList := new([]PermissionSetDetails)
+	var wg sync.WaitGroup
+	instanceArn := viper.GetString("instanceArn")
+
+    cfg, err := config.LoadDefaultConfig(context.TODO(),
+   		config.WithRegion("ca-central-1"),
+   	)
+    if err != nil {
+        log.Fatalf("unable to load SDK config, %v", err)
+    }
+	ssoadm := ssoadmin.NewFromConfig(cfg)
+	
+	nextToken := new(string)
+	for nextToken != nil {
+		list := new(ssoadmin.ListPermissionSetsOutput)
+		if *nextToken == "" {
+			list, err = ssoadm.ListPermissionSets(context.TODO(), &ssoadmin.ListPermissionSetsInput {
+				InstanceArn : &instanceArn,
+				MaxResults : aws.Int32(10),
+			})
+		} else {
+			list, err = ssoadm.ListPermissionSets(context.TODO(), &ssoadmin.ListPermissionSetsInput {
+				InstanceArn : &instanceArn,
+				MaxResults : aws.Int32(10),
+				NextToken : nextToken,
+			})
+		}
+		if err != nil {
+			log.Fatalf("failed to list pss, %v", err)
+		}
+		for _, ps := range list.PermissionSets {
+			wg.Add(1)
+			go func(PSList *[]PermissionSetDetails, arn string) {
+				defer wg.Done()
+				computePermissionSetsDetail(PSList, ps)
+			}(PSList, ps)
+		}
+		nextToken = list.NextToken
+	}
+	wg.Wait()
+	c.JSON(http.StatusOK, PSList)
+}
+
+func computePermissionSetsDetail(PSList *[]PermissionSetDetails, arn string) {
+	//Takes a list of Permission set, converts the Arns into Names and description and add it to the permissionList
+	PermissionSetDetails := permissionSetDetailsFromArn(arn)
+	*PSList = append(*PSList, PermissionSetDetails)
+}
+
+func permissionSetDetailsFromArn(PermissionSetArn string) PermissionSetDetails {
+	PermissionSetDetails := new(PermissionSetDetails)
+	instanceArn := viper.GetString("instanceArn")
+	cfg, err := config.LoadDefaultConfig(context.TODO(),
+	config.WithRegion("ca-central-1"),
+	)
+	ssoadm := ssoadmin.NewFromConfig(cfg)
+	perm, err := ssoadm.DescribePermissionSet(context.TODO(), &ssoadmin.DescribePermissionSetInput   {
+		InstanceArn : &instanceArn,
+		PermissionSetArn : &PermissionSetArn,
+	})
+	if err != nil {
+		log.Fatalf("failed to describe permission set, %v", err)
+	}
+	PermissionSetDetails.Name = *perm.PermissionSet.Name
+	PermissionSetDetails.Description = *perm.PermissionSet.Description
+	return *PermissionSetDetails
 }
 
 func permissionSetNameFromArn(PermissionSetArn string) string {
@@ -325,6 +400,7 @@ func main() {
 	router.GET("/getpspolicies", getPSPoliciesByARN)
 	router.GET("/getpsinline", getPSInlineByARN)
 	router.GET("/accountslist", listAccounts)
+	router.GET("/psslist", listPSs)
 	
 	router.GET("/", func(c *gin.Context) {
         c.HTML(http.StatusOK, "index.html", gin.H{

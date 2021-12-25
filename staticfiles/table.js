@@ -105,7 +105,8 @@ function populate_table() {
     // Create menu links
     menu = document.getElementById('menu_account')
     menu.innerHTML = '<a href="http://' + window.location.host + '">Accounts</a>'
-
+    menu = document.getElementById('menu_ps')
+    menu.innerHTML = '<a href="http://' + window.location.host + '?page=pss">Permission sets</a>'
     // Populate colunm titles
     var table = document.getElementById('myTable');
     var tr = document.createElement('tr');
@@ -125,6 +126,11 @@ function populate_table() {
                 '<th onclick="sortTable(0)">Group</th>' +
                 '<th onclick="sortTable(1)">PermissionSet</th>';
             break;
+        case "pss":
+                tr.innerHTML =
+                    '<th onclick="sortTable(0)">Permission set</th>' +
+                    '<th onclick="sortTable(1)">Description</th>';
+                break;
         default:
             tr.innerHTML =
                 '<th onclick="sortTable(0)">Account name</th>' +
@@ -143,6 +149,9 @@ function populate_table() {
             var account = getParameterByName('account');
             var json_url = 'http://' + window.location.host + '/getaccount/' + account;
             break;
+        case "pss":
+                var json_url = 'http://' + window.location.host + '/psslist/';
+                break;
         default:
             var json_url = 'http://' + window.location.host + '/accountslist';
     }
@@ -184,6 +193,15 @@ function populate_table() {
                     table.appendChild(tr);
                 });
                 break;
+            case "pss":
+                    data.forEach(function (object) {
+                        var tr = document.createElement('tr');
+                        tr.innerHTML =
+                            '<td>' + object.Name + '</td>' +
+                            '<td>' + object.Description + '</td>';
+                        table.appendChild(tr);
+                    });
+                    break;
             default:
                 data.forEach(function (object) {
                     var tr = document.createElement('tr');
