@@ -1,3 +1,4 @@
 instanceArn: "arn:aws:sso:::instance/ssoins-8824064c93f3b479"
 identityStoreId: "d-9d671306f8"
 port: "8080"
+region: "ca-central-1"

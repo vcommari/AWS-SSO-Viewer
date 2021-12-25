@@ -47,7 +47,7 @@ func listAccounts(c *gin.Context) {
 	var accountList []Account
 
     cfg, err := config.LoadDefaultConfig(context.TODO(),
-   		config.WithRegion("ca-central-1"),
+   		config.WithRegion(viper.GetString("region")),
    	)
     if err != nil {
         log.Fatalf("unable to load SDK config, %v", err)
@@ -90,7 +90,7 @@ func listPSs(c *gin.Context) {
 	instanceArn := viper.GetString("instanceArn")
 
     cfg, err := config.LoadDefaultConfig(context.TODO(),
-   		config.WithRegion("ca-central-1"),
+   		config.WithRegion(viper.GetString("region")),
    	)
     if err != nil {
         log.Fatalf("unable to load SDK config, %v", err)
@@ -117,7 +117,8 @@ func listPSs(c *gin.Context) {
 		}
 		for _, ps := range list.PermissionSets {
 			wg.Add(1)
-			go func(PSList *[]PermissionSetDetails, arn string) {
+			//fmt.Println(ps)
+			go func(PSList *[]PermissionSetDetails, arn string) {				
 				defer wg.Done()
 				computePermissionSetsDetail(PSList, ps)
 			}(PSList, ps)
@@ -138,7 +139,7 @@ func permissionSetDetailsFromArn(PermissionSetArn string) PermissionSetDetails {
 	PermissionSetDetails := new(PermissionSetDetails)
 	instanceArn := viper.GetString("instanceArn")
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
-	config.WithRegion("ca-central-1"),
+	config.WithRegion(viper.GetString("region")),
 	)
 	ssoadm := ssoadmin.NewFromConfig(cfg)
 	perm, err := ssoadm.DescribePermissionSet(context.TODO(), &ssoadmin.DescribePermissionSetInput   {
@@ -156,7 +157,7 @@ func permissionSetDetailsFromArn(PermissionSetArn string) PermissionSetDetails {
 func permissionSetNameFromArn(PermissionSetArn string) string {
 	instanceArn := viper.GetString("instanceArn")
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
-	config.WithRegion("ca-central-1"),
+	config.WithRegion(viper.GetString("region")),
 	)
 	ssoadm := ssoadmin.NewFromConfig(cfg)
 	perm, err := ssoadm.DescribePermissionSet(context.TODO(), &ssoadmin.DescribePermissionSetInput   {
@@ -172,7 +173,7 @@ func permissionSetNameFromArn(PermissionSetArn string) string {
 func principalNameFromId(PrincipalId string, PrincipalType string) string {
 	identityStoreId := viper.GetString("identityStoreId")
 	cfg, _ := config.LoadDefaultConfig(context.TODO(),
-	config.WithRegion("ca-central-1"),
+	config.WithRegion(viper.GetString("region")),
 	)
 	myidentitystore := identitystore.NewFromConfig(cfg)
 	if PrincipalType == "GROUP" {
@@ -198,7 +199,7 @@ func principalNameFromId(PrincipalId string, PrincipalType string) string {
 
 func computePermissionSet(permissionset string, result *[]AccountAssociation, id string, host string) {
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
-	config.WithRegion("ca-central-1"),
+	config.WithRegion(viper.GetString("region")),
 	)
 	ssoadm := ssoadmin.NewFromConfig(cfg)
 	instanceArn := viper.GetString("instanceArn")
@@ -272,7 +273,7 @@ func getPermissionsByAccountID(c *gin.Context) {
 	//resultmap := make(map[string]string)
 
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
-   		config.WithRegion("ca-central-1"),
+   		config.WithRegion(viper.GetString("region")),
    	)
 	if err != nil {
         log.Fatalf("unable to load SDK config, %v", err)
@@ -312,7 +313,7 @@ func getPSPoliciesByARN(c *gin.Context) {
 	arn := c.Request.URL.Query()["arn"][0]
 	resultmap := make(map[string]string)
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
-   		config.WithRegion("ca-central-1"),
+   		config.WithRegion(viper.GetString("region")),
    	)
 	if err != nil {
         log.Fatalf("unable to load SDK config, %v", err)
@@ -354,7 +355,7 @@ func getPSPoliciesByARN(c *gin.Context) {
 func getPSInlineByARN(c *gin.Context) {
 	arn := c.Request.URL.Query()["arn"][0]
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithRegion("ca-central-1"),
+		config.WithRegion(viper.GetString("region")),
 	)
 	if err != nil {
  		log.Fatalf("unable to load SDK config, %v", err)
