@@ -197,7 +197,8 @@ function populate_table() {
                     data.forEach(function (object) {
                         var tr = document.createElement('tr');
                         tr.innerHTML =
-                            '<td>' + object.Name + '</td>' +
+                            '<td><a href="http://' + window.location.host + '/?page=ps&?arn=' + 
+                                object.Arn + '">' + object.Name + '</a></td>' +
                             '<td>' + object.Description + '</td>';
                         table.appendChild(tr);
                     });

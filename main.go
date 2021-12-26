@@ -41,6 +41,7 @@ type AccountAssociation struct {
 type PermissionSetDetails struct {
 	Name string
 	Description string
+	Arn string
 }
 
 func listAccounts(c *gin.Context) {
@@ -151,6 +152,7 @@ func permissionSetDetailsFromArn(PermissionSetArn string) PermissionSetDetails {
 	}
 	PermissionSetDetails.Name = *perm.PermissionSet.Name
 	PermissionSetDetails.Description = *perm.PermissionSet.Description
+	PermissionSetDetails.Arn = PermissionSetArn
 	return *PermissionSetDetails
 }
 
