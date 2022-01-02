@@ -121,19 +121,14 @@ func listPSs(c *gin.Context) {
 			fmt.Println(ps) // Without this println the goroutine takes the same ps for some reason 
 			go func(PSList *[]PermissionSetDetails, arn string) {				
 				defer wg.Done()
-				computePermissionSetsDetail(PSList, ps)
+				psd := permissionSetDetailsFromArn(ps)
+				*PSList = append (*PSList, psd)
 			}(PSList, ps)
 		}
 		nextToken = list.NextToken
 	}
 	wg.Wait()
 	c.JSON(http.StatusOK, PSList)
-}
-
-func computePermissionSetsDetail(PSList *[]PermissionSetDetails, arn string) {
-	//Takes a list of Permission set, converts the Arns into Names and description and add it to the permissionList
-	PermissionSetDetails := permissionSetDetailsFromArn(arn)
-	*PSList = append(*PSList, PermissionSetDetails)
 }
 
 func permissionSetDetailsFromArn(PermissionSetArn string) PermissionSetDetails {
@@ -151,7 +146,9 @@ func permissionSetDetailsFromArn(PermissionSetArn string) PermissionSetDetails {
 		log.Fatalf("failed to describe permission set, %v", err)
 	}
 	PermissionSetDetails.Name = *perm.PermissionSet.Name
-	PermissionSetDetails.Description = *perm.PermissionSet.Description
+	if perm.PermissionSet.Description != nil {
+		PermissionSetDetails.Description = *perm.PermissionSet.Description
+	}
 	PermissionSetDetails.Arn = PermissionSetArn
 	return *PermissionSetDetails
 }
