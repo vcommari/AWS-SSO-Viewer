@@ -104,12 +104,12 @@ func listPSs(c *gin.Context) {
 		if *nextToken == "" {
 			list, err = ssoadm.ListPermissionSets(context.TODO(), &ssoadmin.ListPermissionSetsInput {
 				InstanceArn : &instanceArn,
-				MaxResults : aws.Int32(10),
+				MaxResults : aws.Int32(100),
 			})
 		} else {
 			list, err = ssoadm.ListPermissionSets(context.TODO(), &ssoadmin.ListPermissionSetsInput {
 				InstanceArn : &instanceArn,
-				MaxResults : aws.Int32(10),
+				MaxResults : aws.Int32(100),
 				NextToken : nextToken,
 			})
 		}
@@ -118,10 +118,9 @@ func listPSs(c *gin.Context) {
 		}
 		for _, ps := range list.PermissionSets {
 			wg.Add(1)
-			fmt.Println(ps) // Without this println the goroutine takes the same ps for some reason 
 			go func(PSList *[]PermissionSetDetails, arn string) {				
 				defer wg.Done()
-				psd := permissionSetDetailsFromArn(ps)
+				psd := permissionSetDetailsFromArn(arn)
 				*PSList = append (*PSList, psd)
 			}(PSList, ps)
 		}
