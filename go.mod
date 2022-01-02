@@ -1,4 +1,4 @@
-module test5/test-gin-server
+module aws-tools/AWS-SSO-VIEWER
 
 go 1.13
 
