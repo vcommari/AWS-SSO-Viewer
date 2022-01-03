@@ -370,9 +370,9 @@ func getPSInlineByARN(c *gin.Context) {
 
 func main() {
 	// Set the file name of the configurations file
-	viper.SetConfigName("config")
+	viper.SetConfigName("aws-sso-viewer")
 	// Set the path to look for the configurations file
-	viper.AddConfigPath(".")
+	viper.AddConfigPath("/etc/")
 
 	// Enable VIPER to read Environment Variables
 	viper.AutomaticEnv()
@@ -407,7 +407,7 @@ func main() {
 		})
     })
 
-	router.Run("localhost:" + viper.GetString("port"))
+	router.Run("0.0.0.0:" + viper.GetString("port"))
 }
 
 
