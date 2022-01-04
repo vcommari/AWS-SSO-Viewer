@@ -2,9 +2,8 @@ package main
 
 import (
     "context"
-    "fmt"
     "log"
-	//"encoding/json"
+	"fmt"
     "github.com/aws/aws-sdk-go-v2/aws"
     "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ssoadmin"
@@ -14,7 +13,6 @@ import (
 	"net/http"
 	"sync"
 	"github.com/spf13/viper"
-	//"reflect"
 )
 
 type Account struct {
@@ -85,7 +83,6 @@ func listAccounts(c *gin.Context) {
 }
 
 func listPSs(c *gin.Context) {
-	//var PSList []string
 	PSList := new([]PermissionSetDetails)
 	var wg sync.WaitGroup
 	instanceArn := viper.GetString("instanceArn")
@@ -230,22 +227,10 @@ func computePermissionSet(permissionset string, result *[]AccountAssociation, id
 			} else {
 				principalName = principalNameFromId(*assigment.PrincipalId, "USER")
 			}
-			//permarn := permissionSetNameFromArn(*assigment.PermissionSetArn)
 			group := Group{principalName, *assigment.PrincipalId}
 			permissionset := PermissionSet{permissionSetNameFromArn(*assigment.PermissionSetArn), *assigment.PermissionSetArn}
 			a := AccountAssociation{id, group, permissionset}
 			*result = append(*result, a)
-			/*
-			permarn = strings.Replace(permarn, ":", "%3A", -1)
-			permarn = strings.Replace(permarn, "/", "%2F", -1)
-			permissionSetName := "<a href=\"http://" + host + "/?page=ps&arn=" +
-			*assigment.PermissionSetArn + "\">" + permarn + "</a>"
-			if _, ok := result[principalName]; ok {
-				result[principalName] = result[principalName] + ", " + permissionSetName
-			} else {
-				result[principalName] = permissionSetName
-			}
-			*/
 		}
 		nextToken = assignments.NextToken
 	}
@@ -268,7 +253,6 @@ func getPermissionsByAccountID(c *gin.Context) {
 	id := c.Param("id")
 	host := c.Request.Host
 	result := new([]AccountAssociation)
-	//resultmap := make(map[string]string)
 
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
    		config.WithRegion(viper.GetString("region")),
@@ -277,7 +261,6 @@ func getPermissionsByAccountID(c *gin.Context) {
         log.Fatalf("unable to load SDK config, %v", err)
     }
 	ssoadm := ssoadmin.NewFromConfig(cfg)
-	// TODO : Find a way to remove hardcoded arn
 	instanceArn := viper.GetString("instanceArn")
 
 	nextToken := new(string)
@@ -303,7 +286,6 @@ func getPermissionsByAccountID(c *gin.Context) {
 		computePermissionSetsList(permlist.PermissionSets, result, id, host)
 		nextToken = permlist.NextToken
 	}
-	fmt.Println(result)
 	c.JSON(http.StatusOK, result)
 }
 
@@ -317,7 +299,6 @@ func getPSPoliciesByARN(c *gin.Context) {
         log.Fatalf("unable to load SDK config, %v", err)
     }
 	ssoadm := ssoadmin.NewFromConfig(cfg)
-	// TODO : Find a way to remove hardcoded arn
 	instanceArn := viper.GetString("instanceArn")
 	nextToken := new(string)
 	for nextToken != nil {
@@ -339,12 +320,9 @@ func getPSPoliciesByARN(c *gin.Context) {
 		if err != nil {
 			log.Fatalf("failed to list policies, %v", err)
 		}
-		//computePermissionSetsList(permlist.PermissionSets, resultmap, id, host)
 		for _,policy := range policieslist.AttachedManagedPolicies {
 			resultmap[*policy.Name] = *policy.Arn
-			fmt.Println(*policy.Name)
 		}
-		//fmt.Println(policieslist.AttachedManagedPolicies["Name"])
 		nextToken = policieslist.NextToken
 	}
 	c.JSON(http.StatusOK, resultmap)
@@ -359,7 +337,6 @@ func getPSInlineByARN(c *gin.Context) {
  		log.Fatalf("unable to load SDK config, %v", err)
 	}
 	ssoadm := ssoadmin.NewFromConfig(cfg)
-	// TODO : Find a way to remove hardcoded arn
 	instanceArn := viper.GetString("instanceArn")
 	inlinePolicy, err := ssoadm.GetInlinePolicyForPermissionSet(context.TODO(), &ssoadmin.GetInlinePolicyForPermissionSetInput {
 		InstanceArn : &instanceArn,
@@ -386,7 +363,6 @@ func main() {
 
 	router := gin.Default()
 	router.LoadHTMLFiles("staticfiles/index.html")
-	//router.LoadHTMLFiles("staticfiles/account.html")
 	router.Static("/staticfiles", "./staticfiles")
 	router.StaticFile("/table.js", "./staticfiles/table.js")
 	router.StaticFile("/styles.css", "./staticfiles/styles.css")
@@ -394,7 +370,6 @@ func main() {
 	router.StaticFile("/SSO_logo.png", "./staticfiles/SSO_logo.png")
 	router.StaticFile("/images/searchicon.png", "./staticfiles/searchicon.png")
 
-	//router.GET("/getusers/:group", getUsersByGroupID) 
 	router.GET("/getaccount/:id", getPermissionsByAccountID)
 	router.GET("/getpspolicies", getPSPoliciesByARN)
 	router.GET("/getpsinline", getPSInlineByARN)
